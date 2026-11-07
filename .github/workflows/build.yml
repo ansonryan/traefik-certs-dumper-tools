@@ -23,7 +23,9 @@ jobs:
           # 上游版本只存在于 Dockerfile 的 FROM 行，避免两处不同步
           UPSTREAM="$(grep -oP 'traefik-certs-dumper:\K[^[:space:]]+' Dockerfile | head -1)"
           echo "UPSTREAM=$UPSTREAM" >> "$GITHUB_ENV"
-          echo "building on upstream $UPSTREAM"
+          # 镜像标签去掉前缀 v（v2.11.4 → 2.11.4-tools）
+          echo "UPSTREAM_TAG=${UPSTREAM#v}" >> "$GITHUB_ENV"
+          echo "building on upstream $UPSTREAM (tag: ${UPSTREAM#v}-tools)"
 
       - uses: docker/setup-buildx-action@v3
 
@@ -38,7 +40,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE }}:${{ env.UPSTREAM }}-tools
+            ${{ env.IMAGE }}:${{ env.UPSTREAM_TAG }}-tools
             ${{ env.IMAGE }}:latest
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
