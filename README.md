@@ -1,5 +1,9 @@
 # traefik-certs-dumper-tools
 
+[![build](https://github.com/ansonryan/traefik-certs-dumper-tools/actions/workflows/build.yml/badge.svg)](https://github.com/ansonryan/traefik-certs-dumper-tools/actions/workflows/build.yml)
+
+发布镜像：`ghcr.io/ansonryan/traefik-certs-dumper-tools:2.11.4-tools`（public，免登录）
+
 `ldez/traefik-certs-dumper` 的极小派生镜像：**只补 `curl`、`openssl`、`jq` 三个命令，二进制与上游完全一致。**
 
 ## 为什么会有这个仓库
@@ -30,7 +34,7 @@ RUN apk add --no-cache curl openssl jq
 ```yaml
 services:
   traefik-certs-dumper:
-    image: ghcr.io/<OWNER>/traefik-certs-dumper-tools:2.11.4-tools
+    image: ghcr.io/ansonryan/traefik-certs-dumper-tools:2.11.4-tools
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik:/data:ro

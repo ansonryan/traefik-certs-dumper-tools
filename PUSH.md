@@ -1,51 +1,35 @@
-# 推到 GitHub 并启用 GHCR
+# 发布与升级
 
-## 0. 先换 PAT（重要）
+本仓库已发布：`ghcr.io/ansonryan/traefik-certs-dumper-tools`（public）。
 
-旧的 `ghp_RHVr…` 之前标记过泄露，**先轮换**，只改这两处：
+## 升级上游版本
 
-- `~/.github_token`
-- `~/.git-credentials`
+只改一处 —— `Dockerfile` 的 `FROM` 行：
 
-## 1. 建仓并推
+```dockerfile
+FROM ldez/traefik-certs-dumper:v2.11.4      # ← 改成新 tag
+```
+
+提交推送后 workflow 自动构建，产出 `:<去掉 v 的版本>-tools` 与 `:latest`。
+Renovate 也会盯上游提 PR，通常不用手动改。
+
+## 本地构建 / 验证
 
 ```bash
-cd gh-traefik-certs-dumper
-git init -b main
-git add .
-git commit -m "traefik-certs-dumper + curl/openssl/jq"
-gh repo create traefik-certs-dumper-tools --private --source=. --push
+docker build -t traefik-certs-dumper-tools:dev .
+docker run --rm --entrypoint sh traefik-certs-dumper-tools:dev -c \
+  'command -v curl openssl jq traefik-certs-dumper; traefik-certs-dumper file --help | grep -c v3'
 ```
 
-不装 `gh` 也行：网页建空仓，然后
+## 消费端（Unraid 实测 9 秒拉完）
 
 ```bash
-git remote add origin git@github.com:<OWNER>/traefik-certs-dumper-tools.git
-git push -u origin main
+docker pull ghcr.io/ansonryan/traefik-certs-dumper-tools:2.11.4-tools
 ```
 
-## 2. 首次构建
+compose 里直接写全名即可，public 包不需要 `docker login`。
 
-推上去后 `.github/workflows/build.yml` 自动跑，产出：
+## 推送注意事项
 
-```
-ghcr.io/<owner>/traefik-certs-dumper-tools:2.11.4-tools
-ghcr.io/<owner>/traefik-certs-dumper-tools:latest
-```
-
-私有包要登录才能拉：
-
-```bash
-echo <PAT> | docker login ghcr.io -u <user> --password-stdin
-```
-
-## 3. 让 Unraid 用上它
-
-```bash
-docker pull ghcr.io/<owner>/traefik-certs-dumper-tools:2.11.4-tools
-docker tag  ghcr.io/<owner>/traefik-certs-dumper-tools:2.11.4-tools \
-            local/traefik-certs-dumper:2.11.4-compat
-```
-
-或者直接把 compose 里的 image 改成 GHCR 全名（Unraid 需要在
-`/root/.docker/config.json` 里有 ghcr 的登录态，否则 compose 拉不到私有包）。
+- 推 `.github/workflows/*` 需要 token 带 **Workflows: Read and write**（细粒度）或 classic 的 `workflow` scope。
+- 本机若设了 `HTTPS_PROXY`，git 会被代理卡住，用 `git -c http.proxy= -c https.proxy= push ...` 绕过。
